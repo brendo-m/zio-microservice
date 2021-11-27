@@ -1,13 +1,19 @@
 package zio.web.http.openapi
 
 import java.net.URI
-
 import zio.NonEmptyChunk
 import zio.web.docs.Doc
 import zio.web.http.model.StatusCode
 
 import scala.util.matching.Regex
 
+/**
+ * OpenAPI definitions based on https://spec.openapis.org/oas/v3.0.3
+ * Other useful references:
+ *   * https://swagger.io/specification/
+ *   * https://github.com/NumberFour/openapi-scala
+ *   * https://github.com/drwpow/openapi-typescript/blob/main/src/types.ts
+ */
 object OpenAPI {
 
   /**
@@ -15,8 +21,8 @@ object OpenAPI {
    *
    * @param openapi This string MUST be the semantic version number of the OpenAPI Specification version that the OpenAPI document uses. The openapi field SHOULD be used by tooling specifications and clients to interpret the OpenAPI document. This is not related to the API info.version string.
    * @param info Provides metadata about the API. The metadata MAY be used by tooling as required.
-   * @param servers A List of Server Objects, which provide connectivity information to a target server. If the servers property is empty, the default value would be a Server Object with a url value of /.
    * @param paths The available paths and operations for the API.
+   * @param servers A List of Server Objects, which provide connectivity information to a target server. If the servers property is empty, the default value would be a Server Object with a url value of /.
    * @param components An element to hold various schemas for the specification.
    * @param security A declaration of which security mechanisms can be used across the API. The list of values includes alternative security requirement objects that can be used. Only one of the security requirement objects need to be satisfied to authorize a request. Individual operations can override this definition. To make security optional, an empty security requirement ({}) can be included in the List.
    * @param tags A list of tags used by the specification with additional metadata. The order of the tags can be used to reflect on their order by the parsing tools. Not all tags that are used by the Operation Object must be declared. The tags that are not declared MAY be organized randomly or based on the tools’ logic. Each tag name in the list MUST be unique.
@@ -25,31 +31,31 @@ object OpenAPI {
   final case class OpenAPI(
     openapi: String,
     info: Info,
-    servers: List[Server],
     paths: Paths,
-    components: Option[Components],
-    security: List[SecurityRequirement],
-    tags: List[Tag],
-    externalDocs: Doc
+    servers: Option[List[Server]] = None,
+    components: Option[Components] = None,
+    security: Option[List[SecurityRequirement]] = None,
+    tags: Option[List[Tag]] = None,
+    externalDocs: Option[ExternalDocs] = None
   )
 
   /**
    * The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience.
    *
    * @param title The title of the API.
+   * @param version The version of the OpenAPI document (which is distinct from the OpenAPI Specification version or the API implementation version).
    * @param description A short description of the API.
    * @param termsOfService A URL to the Terms of Service for the API.
    * @param contact The contact information for the exposed API.
    * @param license The license information for the exposed API.
-   * @param version The version of the OpenAPI document (which is distinct from the OpenAPI Specification version or the API implementation version).
    */
   final case class Info(
     title: String,
-    description: Doc,
-    termsOfService: URI,
-    contact: Option[Contact],
-    license: Option[License],
-    version: String
+    version: String,
+    description: Option[Doc] = None,
+    termsOfService: Option[URI] = None,
+    contact: Option[Contact] = None,
+    license: Option[License] = None
   )
 
   /**
@@ -59,7 +65,7 @@ object OpenAPI {
    * @param url The URL pointing to the contact information.
    * @param email The email address of the contact person/organization. MUST be in the format of an email address.
    */
-  final case class Contact(name: Option[String], url: Option[URI], email: String)
+  final case class Contact(name: Option[String] = None, url: Option[URI] = None, email: Option[String] = None)
 
   /**
    * License information for the exposed API.
@@ -67,7 +73,7 @@ object OpenAPI {
    * @param name The license name used for the API.
    * @param url A URL to the license used for the API.
    */
-  final case class License(name: String, url: Option[URI])
+  final case class License(name: String, url: Option[URI] = None)
 
   /**
    * An object representing a Server.
@@ -76,16 +82,24 @@ object OpenAPI {
    * @param description Describing the host designated by the URL.
    * @param variables A map between a variable name and its value. The value is used for substitution in the server’s URL template.
    */
-  final case class Server(url: URI, description: Doc, variables: Map[String, ServerVariable])
+  final case class Server(
+    url: URI,
+    description: Option[Doc] = None,
+    variables: Option[Map[String, ServerVariable]] = None
+  )
 
   /**
    * An object representing a Server Variable for server URL template substitution.
    *
-   * @param enum An enumeration of string values to be used if the substitution options are from a limited set.
    * @param default The default value to use for substitution, which SHALL be sent if an alternate value is not supplied. Note this behavior is different than the Schema Object’s treatment of default values, because in those cases parameter values are optional. If the enum is defined, the value SHOULD exist in the enum’s values.
+   * @param enum An enumeration of string values to be used if the substitution options are from a limited set.
    * @param description A description for the server variable.
    */
-  final case class ServerVariable(enum: NonEmptyChunk[String], default: String, description: Doc)
+  final case class ServerVariable(
+    default: String,
+    enum: Option[NonEmptyChunk[String]] = None,
+    description: Option[Doc] = None
+  )
 
   /**
    * Holds a set of reusable objects for different aspects of the OAS. All objects defined within the components object will have no effect on the API unless they are explicitly referenced from properties outside the components object.
@@ -101,15 +115,15 @@ object OpenAPI {
    * @param callbacks An object to hold reusable Callback Objects.
    */
   final case class Components(
-    schemas: Map[Key, SchemaOrReference],
-    responses: Map[Key, ResponseOrReference],
-    parameters: Map[Key, ParameterOrReference],
-    examples: Map[Key, ExampleOrReference],
-    requestBodies: Map[Key, RequestBodyOrReference],
-    headers: Map[Key, HeaderOrReference],
-    securitySchemes: Map[Key, SecuritySchemeOrReference],
-    links: Map[Key, LinkOrReference],
-    callbacks: Map[Key, CallbackOrReference]
+    schemas: Option[Map[Key, SchemaOrReference]] = None,
+    responses: Option[Map[Key, ResponseOrReference]] = None,
+    parameters: Option[Map[Key, ParameterOrReference]] = None,
+    examples: Option[Map[Key, ExampleOrReference]] = None,
+    requestBodies: Option[Map[Key, RequestBodyOrReference]] = None,
+    headers: Option[Map[Key, HeaderOrReference]] = None,
+    securitySchemes: Option[Map[Key, SecuritySchemeOrReference]] = None,
+    links: Option[Map[Key, LinkOrReference]] = None,
+    callbacks: Option[Map[Key, CallbackOrReference]] = None
   )
 
   sealed abstract case class Key private (name: String)
@@ -153,7 +167,7 @@ object OpenAPI {
    *
    * @param ref Allows for an external definition of this path item. The referenced structure MUST be in the format of a Path Item Object. In case a Path Item Object field appears both in the defined object and the referenced object, the behavior is undefined.
    * @param summary An optional, string summary, intended to apply to all operations in this path.
-   * @param description A description, intended to apply to all operations in this path.
+   * @param description An optional, string description, intended to apply to all operations in this path. CommonMark syntax MAY be used for rich text representation.
    * @param get A definition of a GET operation on this path.
    * @param put A definition of a PUT operation on this path.
    * @param post A definition of a POST operation on this path.
@@ -166,228 +180,163 @@ object OpenAPI {
    * @param parameters A Set of parameters that are applicable for all the operations described under this path. These parameters can be overridden at the operation level, but cannot be removed there. The Set can use the Reference Object to link to parameters that are defined at the OpenAPI Object’s components/parameters.
    */
   final case class PathItem(
-    ref: String,
-    summary: String = "",
-    description: Doc,
-    get: Option[Operation],
-    put: Option[Operation],
-    post: Option[Operation],
-    delete: Option[Operation],
-    options: Option[Operation],
-    head: Option[Operation],
-    patch: Option[Operation],
-    trace: Option[Operation],
-    servers: List[Server],
-    parameters: Set[ParameterOrReference]
+    ref: Option[String] = None,
+    summary: Option[String] = None,
+    description: Option[Doc] = None,
+    get: Option[Operation] = None,
+    put: Option[Operation] = None,
+    post: Option[Operation] = None,
+    delete: Option[Operation] = None,
+    options: Option[Operation] = None,
+    head: Option[Operation] = None,
+    patch: Option[Operation] = None,
+    trace: Option[Operation] = None,
+    servers: Option[List[Server]] = None,
+    parameters: Option[Set[ParameterOrReference]] = None
   )
 
   /**
    * Describes a single API operation on a path.
    *
+   * @param operationId Unique string used to identify the operation. The id MUST be unique among all operations described in the API. The operationId value is case-sensitive. Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is RECOMMENDED to follow common programming naming conventions.
+   *                    NOTE: spec does not say this is required, but it's best practice to include it
+   * @param responses The List of possible responses as they are returned from executing this operation.
    * @param tags A list of tags for API documentation control. Tags can be used for logical grouping of operations by resources or any other qualifier.
    * @param summary A short summary of what the operation does.
    * @param description A verbose explanation of the operation behavior.
    * @param externalDocs Additional external documentation for this operation.
-   * @param operationId Unique string used to identify the operation. The id MUST be unique among all operations described in the API. The operationId value is case-sensitive. Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is RECOMMENDED to follow common programming naming conventions.
    * @param parameters A List of parameters that are applicable for this operation. If a parameter is already defined at the Path Item, the new definition will override it but can never remove it. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a name and location. The list can use the Reference Object to link to parameters that are defined at the OpenAPI Object’s components/parameters.
    * @param requestBody The request body applicable for this operation. The requestBody is only supported in HTTP methods where the HTTP 1.1 specification [RFC7231] has explicitly defined semantics for request bodies. In other cases where the HTTP spec is vague, requestBody SHALL be ignored by consumers.
-   * @param responses The List of possible responses as they are returned from executing this operation.
    * @param callbacks A map of possible out-of band callbacks related to the parent operation. The key is a unique identifier for the Callback Object. Each value in the map is a Callback Object that describes a request that may be initiated by the API provider and the expected responses.
    * @param deprecated Declares this operation to be deprecated. Consumers SHOULD refrain from usage of the declared operation.
    * @param security A declaration of which security mechanisms can be used for this operation. The List of values includes alternative security requirement objects that can be used. Only one of the security requirement objects need to be satisfied to authorize a request. To make security optional, an empty security requirement ({}) can be included in the array. This definition overrides any declared top-level security. To remove a top-level security declaration, an empty List can be used.
    * @param servers An alternative server List to service this operation. If an alternative server object is specified at the Path Item Object or Root level, it will be overridden by this value.
    */
   final case class Operation(
-    tags: List[String],
-    summary: String = "",
-    description: Doc,
-    externalDocs: Option[URI],
-    operationId: Option[String],
-    parameters: Set[ParameterOrReference],
-    requestBody: Option[RequestBodyOrReference],
+    operationId: String,
     responses: Responses,
-    callbacks: Map[String, CallbackOrReference],
-    deprecated: Boolean = false,
-    security: List[SecurityRequirement],
-    servers: List[Server]
+    tags: Option[List[String]] = None,
+    summary: Option[String] = None,
+    description: Option[Doc] = None,
+    externalDocs: Option[ExternalDocs] = None,
+    parameters: Option[Set[ParameterOrReference]] = None,
+    requestBody: Option[RequestBodyOrReference] = None,
+    callbacks: Option[Map[String, CallbackOrReference]] = None,
+    deprecated: Option[Boolean] = None,
+    security: Option[List[SecurityRequirement]] = None,
+    servers: Option[List[Server]] = None
   )
 
   sealed trait ParameterOrReference
 
   /**
-   * Describes a single operation parameter.
+   * Allows referencing an external resource for extended documentation.
+   *
+   * @param url The URL for the target documentation. Value MUST be in the format of a URL.
+   * @param description A short description of the target documentation. CommonMark syntax MAY be used for rich text representation.
    */
-  sealed trait Parameter extends ParameterOrReference {
-    def name: String
-    def in: String
-    def description: Doc
-    def required: Boolean
-    def deprecated: Boolean
-    def allowEmptyValue: Boolean
-    def definition: Parameter.Definition
-    def explode: Boolean
-    def examples: Map[String, ExampleOrReference]
+  case class ExternalDocs(
+    url: URI,
+    description: Option[Doc] = None
+  )
 
-    /**
-     * A unique parameter is defined by a combination of a name and location.
-     */
-    override def equals(obj: Any): Boolean = obj match {
-      case p: Parameter.QueryParameter if name == p.name && in == p.in => true
-      case _                                                           => false
-    }
+  /**
+   * Parameter Locations
+   *
+   * There are four possible parameter locations specified by the in field:
+   * path - Used together with Path Templating, where the parameter value is actually part of the operation's URL. This does not include the host or base path of the API. For example, in /items/{itemId}, the path parameter is itemId.
+   * query - Parameters that are appended to the URL. For example, in /items?id=###, the query parameter is id.
+   * header - Custom headers that are expected as part of the request. Note that RFC7230 states header names are case insensitive.
+   * cookie - Used to pass a specific cookie value to the API.
+   */
+  sealed trait ParameterLocation
+
+  object ParameterLocation {
+    final case object Query  extends ParameterLocation
+    final case object Path   extends ParameterLocation
+    final case object Header extends ParameterLocation
+    final case object Cookie extends ParameterLocation
   }
 
-  object Parameter {
-    sealed trait Definition extends SchemaOrReference
+  sealed trait Style
 
-    object Definition {
-      final case class Content(key: String, mediaType: String) extends Definition
-    }
-
-    sealed trait PathStyle
-
-    sealed trait QueryStyle
-
-    case object Matrix         extends PathStyle
-    case object Label          extends PathStyle
-    case object Simple         extends PathStyle
-    case object Form           extends QueryStyle
-    case object SpaceDelimited extends QueryStyle
-    case object PipeDelimited  extends QueryStyle
-    case object DeepObject     extends QueryStyle
-
-    /**
-     * Parameters that are appended to the URL. For example, in /items?id=###, the query parameter is id.
-     *
-     * @param name The name of the parameter. Parameter names are case sensitive.
-     * @param description A brief description of the parameter.
-     * @param deprecated Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.
-     * @param allowEmptyValue Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED, as it is likely to be removed in a later revision.
-     */
-    final case class QueryParameter(
-      name: String,
-      description: Doc,
-      deprecated: Boolean = false,
-      allowEmptyValue: Boolean = false,
-      definition: Definition,
-      allowReserved: Boolean = false,
-      style: QueryStyle = Form,
-      explode: Boolean = true,
-      examples: Map[String, ExampleOrReference]
-    ) extends Parameter {
-      def in: String        = "query"
-      def required: Boolean = true
-    }
-
-    /**
-     * Custom headers that are expected as part of the request. Note that [RFC7230] states header names are case insensitive.
-     *
-     * @param name The name of the parameter. Parameter names are case sensitive.
-     * @param description A brief description of the parameter.
-     * @param required Determines whether this parameter is mandatory.
-     * @param deprecated Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.
-     * @param allowEmptyValue Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED, as it is likely to be removed in a later revision.
-     */
-    final case class HeaderParameter(
-      name: String,
-      description: Doc,
-      required: Boolean,
-      deprecated: Boolean = false,
-      allowEmptyValue: Boolean = false,
-      definition: Definition,
-      explode: Boolean = false,
-      examples: Map[String, ExampleOrReference]
-    ) extends Parameter {
-      def in: String    = "header"
-      def style: String = "simple"
-    }
-
-    /**
-     * Used together with Path Templating, where the parameter value is actually part of the operation’s URL. This does not include the host or base path of the API. For example, in /items/{itemId}, the path parameter is itemId.
-     *
-     * @param name The name of the parameter. Parameter names are case sensitive.
-     * @param description A brief description of the parameter.
-     * @param required Determines whether this parameter is mandatory.
-     * @param deprecated Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.
-     * @param allowEmptyValue Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED, as it is likely to be removed in a later revision.
-     */
-    final case class PathParameter(
-      name: String,
-      description: Doc,
-      required: Boolean,
-      deprecated: Boolean = false,
-      allowEmptyValue: Boolean = false,
-      definition: Definition,
-      style: PathStyle = Simple,
-      explode: Boolean = false,
-      examples: Map[String, ExampleOrReference]
-    ) extends Parameter {
-      def in: String = "path"
-    }
-
-    /**
-     * Used to pass a specific cookie value to the API.
-     *
-     * @param name The name of the parameter. Parameter names are case sensitive.
-     * @param description A brief description of the parameter.
-     * @param required Determines whether this parameter is mandatory.
-     * @param deprecated Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.
-     * @param allowEmptyValue Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED, as it is likely to be removed in a later revision.
-     */
-    final case class CookieParameter(
-      name: String,
-      description: Doc,
-      required: Boolean,
-      deprecated: Boolean = false,
-      allowEmptyValue: Boolean = false,
-      definition: Definition,
-      explode: Boolean = false,
-      examples: Map[String, ExampleOrReference]
-    ) extends Parameter {
-      def in: String    = "cookie"
-      def style: String = "form"
-    }
+  object Style {
+    final case object Matrix         extends Style
+    final case object Label          extends Style
+    final case object Simple         extends Style
+    final case object Form           extends Style
+    final case object SpaceDelimited extends Style
+    final case object PipeDelimited  extends Style
+    final case object DeepObject     extends Style
   }
 
-  sealed trait HeaderOrReference
-
-  final case class Header(
-    description: Doc,
-    required: Boolean,
-    deprecate: Boolean = false,
-    allowEmptyValue: Boolean = false,
-    content: (String, MediaType)
-  ) extends HeaderOrReference
+  /**
+   *
+   * @param name The name of the parameter. Parameter names are case sensitive.
+   *             If in is "path", the name field MUST correspond to a template expression occurring within the path field in the Paths Object. See Path Templating for further information.
+   *             If in is "header" and the name field is "Accept", "Content-Type" or "Authorization", the parameter definition SHALL be ignored.
+   *             For all other cases, the name corresponds to the parameter name used by the in property.
+   * @param in The location of the parameter. Possible values are "query", "header", "path" or "cookie".
+   * @param description A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.
+   * @param required Determines whether this parameter is mandatory. If the parameter location is "path", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.
+   * @param deprecated Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false.
+   * @param allowEmptyValue Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. Default value is false. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED, as it is likely to be removed in a later revision.
+   * @param style Describes how the parameter value will be serialized depending on the type of the parameter value. Default values (based on value of in): for query - form; for path - simple; for header - simple; for cookie - form.
+   * @param explode When this is true, parameter values of type array or object generate separate parameters for each value of the array or key-value pair of the map. For other types of parameters this property has no effect. When style is form, the default value is true. For all other styles, the default value is false.
+   * @param allowReserved Determines whether the parameter value SHOULD allow reserved characters, as defined by RFC3986 :/?#[]@!$&'()*+,;= to be included without percent-encoding. This property only applies to parameters with an in value of query. The default value is false.
+   * @param schema The schema defining the type used for the parameter.
+   * @param example Example of the parameter's potential value. The example SHOULD match the specified schema and encoding properties if present. The example field is mutually exclusive of the examples field. Furthermore, if referencing a schema that contains an example, the example value SHALL override the example provided by the schema. To represent examples of media types that cannot naturally be represented in JSON or YAML, a string value can contain the example with escaping where necessary.
+   * @param examples Examples of the parameter's potential value. Each example SHOULD contain a value in the correct format as specified in the parameter encoding. The examples field is mutually exclusive of the example field. Furthermore, if referencing a schema that contains an example, the examples value SHALL override the example provided by the schema.
+   */
+  case class Parameter(
+    name: String,
+    in: ParameterLocation,
+    description: Option[Doc] = None,
+    required: Option[Boolean] = None,
+    deprecated: Option[Boolean] = None,
+    allowEmptyValue: Option[Boolean] = None,
+    style: Option[Style] = None,
+    explode: Option[Boolean] = None,
+    allowReserved: Option[Boolean] = None,
+    schema: Option[SchemaOrReference] = None,
+    example: Option[Any] = None,
+    examples: Option[Map[Key, ExampleOrReference]] = None,
+    content: Option[Map[String, MediaType]] = None
+  ) extends ParameterOrReference
 
   sealed trait RequestBodyOrReference
 
   /**
    * Describes a single request body.
    *
-   * @param description A brief description of the request body. This could contain examples of use.
    * @param content The content of the request body. The key is a media type or [media type range]appendix-D) and the value describes it. For requests that match multiple keys, only the most specific key is applicable.
+   * @param description A brief description of the request body. This could contain examples of use.
    * @param required Determines if the request body is required in the request.
    */
-  final case class RequestBody(description: Doc, content: Map[String, MediaType], required: Boolean = false)
-      extends ResponseOrReference
+  final case class RequestBody(
+    content: Map[String, MediaType],
+    description: Option[Doc] = None,
+    required: Option[Boolean] = None
+  ) extends RequestBodyOrReference
 
   /**
    * Each Media Type Object provides schema and examples for the media type identified by its key.
    *
    * @param schema The schema defining the content of the request, response, or parameter.
+   *               NOTE: spec does not say this is required, but it's best practice to include it
+   * @param example Example of the media type. The example object SHOULD be in the correct format as specified by the media type. The example field is mutually exclusive of the examples field. Furthermore, if referencing a schema which contains an example, the example value SHALL override the example provided by the schema.
    * @param examples Examples of the media type. Each example object SHOULD match the media type and specified schema if present. If referencing a schema which contains an example, the examples value SHALL override the example provided by the schema.
    * @param encoding A map between a property name and its encoding information. The key, being the property name, MUST exist in the schema as a property. The encoding object SHALL only apply to requestBody objects when the media type is multipart or application/x-www-form-urlencoded.
    */
   final case class MediaType(
-    schema: SchemaOrReference,
-    examples: Map[String, ExampleOrReference],
-    encoding: Map[String, Encoding]
+    schema: Option[SchemaOrReference],
+    example: Option[Any] = None,
+    examples: Option[Map[String, ExampleOrReference]] = None,
+    encoding: Option[Map[String, Encoding]] = None
   )
 
   /**
    * A single encoding definition applied to a single schema property.
-   *
-   * TODO: default values (https://spec.openapis.org/oas/v3.0.3#encoding-object)
    *
    * @param contentType The Content-Type for encoding a specific property.
    * @param headers A map allowing additional information to be provided as headers, for example Content-Disposition. Content-Type is described separately and SHALL be ignored in this section. This property SHALL be ignored if the request body media type is not a multipart.
@@ -396,11 +345,11 @@ object OpenAPI {
    * @param allowReserved Determines whether the parameter value SHOULD allow reserved characters, as defined by [RFC3986] to be included without percent-encoding. This property SHALL be ignored if the request body media type is not application/x-www-form-urlencoded.
    */
   final case class Encoding(
-    contentType: String,
-    headers: Map[String, HeaderOrReference],
-    style: String = "form",
-    explode: Boolean,
-    allowReserved: Boolean = false
+    contentType: Option[String] = None,
+    headers: Option[Map[String, HeaderOrReference]],
+    style: Option[String] = None,
+    explode: Option[Boolean] = None,
+    allowReserved: Option[Boolean] = None
   )
 
   /**
@@ -421,19 +370,17 @@ object OpenAPI {
    */
   final case class Response(
     description: Doc,
-    headers: Map[String, HeaderOrReference],
-    content: Map[String, MediaType],
-    links: Map[String, LinkOrReference]
+    headers: Option[Map[String, HeaderOrReference]] = None,
+    content: Option[Map[String, MediaType]] = None,
+    links: Option[Map[String, LinkOrReference]] = None
   ) extends ResponseOrReference
 
   sealed trait CallbackOrReference
 
   /**
    * A map of possible out-of band callbacks related to the parent operation. Each value in the map is a Path Item Object that describes a set of requests that may be initiated by the API provider and the expected responses. The key value used to identify the path item object is an expression, evaluated at runtime, that identifies a URL to use for the callback operation.
-   *
-   * @param expressions A Path Item Object used to define a callback request and expected responses.
    */
-  final case class Callback(expressions: Map[String, PathItem]) extends CallbackOrReference
+  type Callback = Map[String, PathItem] with CallbackOrReference
 
   sealed trait ExampleOrReference
 
@@ -442,9 +389,15 @@ object OpenAPI {
    *
    * @param summary Short description for the example.
    * @param description Long description for the example.
+   * @param value Embedded literal example. The value field and externalValue field are mutually exclusive. To represent examples of media types that cannot naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary.
    * @param externalValue A URL that points to the literal example. This provides the capability to reference examples that cannot easily be included in JSON or YAML documents.
    */
-  final case class Example(summary: String = "", description: Doc, externalValue: URI) extends ExampleOrReference
+  final case class Example(
+    summary: Option[String] = None,
+    description: Option[Doc] = None,
+    value: Option[Any] = None,
+    externalValue: Option[URI] = None
+  ) extends ExampleOrReference
 
   sealed trait LinkOrReference
 
@@ -455,19 +408,54 @@ object OpenAPI {
    *
    * For computing links, and providing instructions to execute them, a runtime expression is used for accessing values in an operation and using them as parameters while invoking the linked operation.
    *
-   * @param operationRef A relative or absolute URI reference to an OAS operation. This field MUST point to an Operation Object. Relative operationRef values MAY be used to locate an existing Operation Object in the OpenAPI definition.
+   * @param operationRef A relative or absolute URI reference to an OAS operation. This field is mutually exclusive of the operationId field, and MUST point to an Operation Object. Relative operationRef values MAY be used to locate an existing Operation Object in the OpenAPI definition.
+   * @param operationId The name of an existing, resolvable OAS operation, as defined with a unique operationId. This field is mutually exclusive of the operationRef field.
    * @param parameters A map representing parameters to pass to an operation as identified via operationRef. The key is the parameter name to be used, whereas the value can be a constant or an expression to be evaluated and passed to the linked operation. The parameter name can be qualified using the parameter location [{in}.]{name} for operations that use the same parameter name in different locations (e.g. path.id).
    * @param requestBody A literal value or {expression} to use as a request body when calling the target operation.
    * @param description A description of the link.
    * @param server A server object to be used by the target operation.
    */
   final case class Link(
-    operationRef: URI,
-    parameters: Map[String, Any],
-    requestBody: Any,
-    description: Doc,
-    server: Option[Server]
+    operationRef: Option[URI] = None,
+    operationId: Option[String] = None,
+    parameters: Option[Map[String, Any]] = None,
+    requestBody: Option[Any] = None,
+    description: Option[Doc] = None,
+    server: Option[Server] = None
   ) extends LinkOrReference
+
+  sealed trait HeaderOrReference
+
+  /**
+   * The Header Object follows the structure of the Parameter Object with the following changes:
+   * 1. name MUST NOT be specified, it is given in the corresponding headers map.
+   * 2. in MUST NOT be specified, it is implicitly in header.
+   * 3. All traits that are affected by the location MUST be applicable to a location of header (for example, style).
+   *
+   * @param description A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.
+   * @param required Determines whether this parameter is mandatory. If the parameter location is "path", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.
+   * @param deprecated Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false.
+   * @param allowEmptyValue Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. Default value is false. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED, as it is likely to be removed in a later revision.
+   * @param style Describes how the parameter value will be serialized depending on the type of the parameter value. Default values (based on value of in): for query - form; for path - simple; for header - simple; for cookie - form.
+   * @param explode When this is true, parameter values of type array or object generate separate parameters for each value of the array or key-value pair of the map. For other types of parameters this property has no effect. When style is form, the default value is true. For all other styles, the default value is false.
+   * @param allowReserved Determines whether the parameter value SHOULD allow reserved characters, as defined by RFC3986 :/?#[]@!$&'()*+,;= to be included without percent-encoding. This property only applies to parameters with an in value of query. The default value is false.
+   * @param schema The schema defining the type used for the parameter.
+   * @param example Example of the parameter's potential value. The example SHOULD match the specified schema and encoding properties if present. The example field is mutually exclusive of the examples field. Furthermore, if referencing a schema that contains an example, the example value SHALL override the example provided by the schema. To represent examples of media types that cannot naturally be represented in JSON or YAML, a string value can contain the example with escaping where necessary.
+   * @param examples Examples of the parameter's potential value. Each example SHOULD contain a value in the correct format as specified in the parameter encoding. The examples field is mutually exclusive of the example field. Furthermore, if referencing a schema that contains an example, the examples value SHALL override the example provided by the schema.
+   */
+  final case class Header(
+    description: Option[Doc] = None,
+    required: Option[Boolean] = None,
+    deprecated: Option[Boolean] = None,
+    allowEmptyValue: Option[Boolean] = None,
+    style: Option[Style] = None,
+    explode: Option[Boolean] = None,
+    allowReserved: Option[Boolean] = None,
+    schema: Option[SchemaOrReference] = None,
+    example: Option[Any] = None,
+    examples: Option[Map[Key, ExampleOrReference]] = None,
+    content: Option[Map[String, MediaType]] = None
+  ) extends HeaderOrReference
 
   /**
    * Adds metadata to a single tag that is used by the Operation Object. It is not mandatory to have a Tag Object per tag defined in the Operation Object instances.
@@ -476,7 +464,7 @@ object OpenAPI {
    * @param description A short description for the tag.
    * @param externalDocs Additional external documentation for this tag.
    */
-  final case class Tag(name: String, description: Doc, externalDocs: URI)
+  final case class Tag(name: String, description: Option[Doc] = None, externalDocs: Option[ExternalDocs] = None)
 
   /**
    * A simple object to allow referencing other components in the specification, internally and externally.
@@ -494,71 +482,65 @@ object OpenAPI {
       with LinkOrReference
       with CallbackOrReference
 
+  sealed trait InstanceType
+
+  object InstanceType {
+    final case object Object  extends InstanceType
+    final case object Array   extends InstanceType
+    final case object String  extends InstanceType
+    final case object Number  extends InstanceType
+    final case object Boolean extends InstanceType
+    final case object Null    extends InstanceType
+  }
+
   sealed trait SchemaOrReference
 
-  sealed trait Schema extends SchemaOrReference {
-    def nullable: Boolean
-    def discriminator: Option[Discriminator]
-    def readOnly: Boolean
-    def writeOnly: Boolean
-    def xml: Option[XML]
-    def externalDocs: URI
-    def example: String
-    def deprecated: Boolean
-  }
-
-  object Schema {
-
-    /**
-     * The Schema Object allows the definition of input and output data types.
-     *
-     * Marked as readOnly. This means that it MAY be sent as part of a response but SHOULD NOT be sent as part of the request. If the property is in the required list, the required will take effect on the response only.
-     *
-     * @param nullable      A true value adds "null" to the allowed type specified by the type keyword, only if type is explicitly defined within the same Schema Object. Other Schema Object constraints retain their defined behavior, and therefore may disallow the use of null as a value. A false value leaves the specified or default type unmodified.
-     * @param discriminator Adds support for polymorphism. The discriminator is an object name that is used to differentiate between other schemas which may satisfy the payload description.
-     * @param xml           This MAY be used only on properties schemas. It has no effect on root schemas. Adds additional metadata to describe the XML representation of this property.
-     * @param externalDocs  Additional external documentation for this schema.
-     * @param example       A free-form property to include an example of an instance for this schema.
-     * @param deprecated    Specifies that a schema is deprecated and SHOULD be transitioned out of usage.
-     */
-    final case class ResponseSchema(
-      nullable: Boolean = false,
-      discriminator: Option[Discriminator],
-      xml: Option[XML],
-      externalDocs: URI,
-      example: String,
-      deprecated: Boolean = false
-    ) extends Schema
-        with Parameter.Definition {
-      def readOnly: Boolean  = true
-      def writeOnly: Boolean = false
-    }
-
-    /**
-     * The Schema Object allows the definition of input and output data types.
-     *
-     * Marked as writeOnly. This means that it MAY be sent as part of a request but SHOULD NOT be sent as part of the response. If the property is in the required list, the required will take effect on the request only.
-     *
-     * @param nullable      A true value adds "null" to the allowed type specified by the type keyword, only if type is explicitly defined within the same Schema Object. Other Schema Object constraints retain their defined behavior, and therefore may disallow the use of null as a value. A false value leaves the specified or default type unmodified.
-     * @param discriminator Adds support for polymorphism. The discriminator is an object name that is used to differentiate between other schemas which may satisfy the payload description.
-     * @param xml           This MAY be used only on properties schemas. It has no effect on root schemas. Adds additional metadata to describe the XML representation of this property.
-     * @param externalDocs  Additional external documentation for this schema.
-     * @param example       A free-form property to include an example of an instance for this schema.
-     * @param deprecated    Specifies that a schema is deprecated and SHOULD be transitioned out of usage.
-     */
-    final case class RequestSchema(
-      nullable: Boolean = false,
-      discriminator: Option[Discriminator],
-      xml: Option[XML],
-      externalDocs: URI,
-      example: String,
-      deprecated: Boolean = false
-    ) extends Schema
-        with Parameter.Definition {
-      def readOnly: Boolean  = false
-      def writeOnly: Boolean = true
-    }
-  }
+  /**
+   * The Schema Object allows the definition of input and output data types. These types can be objects, but also
+   * primitives and arrays. This object is an extended subset of the JSON Schema Specification Wright Draft 00.
+   *
+   * For more information about the properties, see JSON Schema Core and JSON Schema Validation. Unless stated
+   * otherwise, the property definitions follow the JSON Schema.
+   *
+   * See docs for field definitions: https://spec.openapis.org/oas/v3.0.3#schema-object
+   */
+  final case class Schema(
+    `type`: InstanceType,
+    title: Option[String] = None,
+    multipleOf: Option[Int] = None,
+    maximum: Option[Int] = None,
+    exclusiveMaximum: Option[Boolean] = None,
+    minimum: Option[Int] = None,
+    exclusiveMinimum: Option[Boolean] = None,
+    maxLength: Option[Int] = None,
+    minLength: Option[Int] = None,
+    pattern: Option[String] = None,
+    maxItems: Option[Int] = None,
+    minItems: Option[Int] = None,
+    uniqueItems: Option[Boolean] = None,
+    maxProperties: Option[Int] = None,
+    minProperties: Option[Int] = None,
+    required: Option[List[String]] = None,
+    enum: Option[List[String]] = None,
+    allOf: Option[NonEmptyChunk[SchemaOrReference]] = None,
+    oneOf: Option[NonEmptyChunk[SchemaOrReference]] = None,
+    anyOf: Option[NonEmptyChunk[SchemaOrReference]] = None,
+    not: Option[SchemaOrReference] = None,
+    items: Option[SchemaOrReference] = None,
+    properties: Option[Map[String, SchemaOrReference]] = None,
+    additionalProperties: Option[SchemaOrReference] = None, // TODO: this can be a boolean too
+    description: Option[Doc] = None,
+    format: Option[String] = None,
+    default: Option[Any] = None,
+    nullable: Option[Boolean] = None,
+    discriminator: Option[Discriminator] = None,
+    readOnly: Option[Boolean] = None,
+    writeOnly: Option[Boolean] = None,
+    xml: Option[XML] = None,
+    externalDocs: Option[ExternalDocs] = None,
+    example: Option[String] = None,
+    deprecated: Option[Boolean] = None
+  ) extends SchemaOrReference
 
   /**
    * When request bodies or response payloads may be one of a number of different schemas, a discriminator object can be used to aid in serialization, deserialization, and validation. The discriminator is a specific object in a schema which is used to inform the consumer of the specification of an alternative schema based on the value associated with it.
@@ -568,7 +550,7 @@ object OpenAPI {
    * @param propertyName The name of the property in the payload that will hold the discriminator value.
    * @param mapping An object to hold mappings between payload values and schema names or references.
    */
-  final case class Discriminator(propertyName: String, mapping: Map[String, String])
+  final case class Discriminator(propertyName: String, mapping: Option[Map[String, String]] = None)
 
   /**
    * A metadata object that allows for more fine-tuned XML model definitions.
@@ -581,7 +563,13 @@ object OpenAPI {
    * @param attribute Declares whether the property definition translates to an attribute instead of an element.
    * @param wrapped MAY be used only for an array definition. Signifies whether the array is wrapped (for example, <books><book/><book/></books>) or unwrapped (<book/><book/>). The definition takes effect only when defined alongside type being array (outside the items).
    */
-  final case class XML(name: String, namespace: URI, prefix: String, attribute: Boolean = false, wrapped: Boolean)
+  final case class XML(
+    name: Option[String] = None,
+    namespace: Option[URI] = None,
+    prefix: Option[String] = None,
+    attribute: Option[Boolean] = None,
+    wrapped: Option[Boolean] = None
+  )
 
   sealed trait SecuritySchemeOrReference
 
@@ -715,8 +703,6 @@ object OpenAPI {
    * Security Requirement Objects that contain multiple schemes require that all schemes MUST be satisfied for a request to be authorized. This enables support for scenarios where multiple query parameters or HTTP headers are required to convey security information.
    *
    * When a list of Security Requirement Objects is defined on the OpenAPI Object or Operation Object, only one of the Security Requirement Objects in the list needs to be satisfied to authorize the request.
-   *
-   * @param securitySchemes If the security scheme is of type "oauth2" or "openIdConnect", then the value is a list of scope names required for the execution, and the list MAY be empty if authorization does not require a specified scope. For other security scheme types, the List MUST be empty.
    */
-  final case class SecurityRequirement(securitySchemes: Map[String, List[String]])
+  type SecurityRequirement = Map[String, List[String]]
 }
